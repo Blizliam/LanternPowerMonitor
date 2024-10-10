@@ -1,6 +1,5 @@
 package com.lanternsoftware.currentmonitor;
 
-
 import com.lanternsoftware.datamodel.currentmonitor.Breaker;
 import com.lanternsoftware.util.NullUtils;
 import com.lanternsoftware.util.dao.annotations.DBSerializable;
@@ -32,6 +31,7 @@ public class MonitorConfig {
     private String influxDB2ApiToken;
     private String influxDB2Org;
     private String influxDB2Bucket;
+    private String lokiUrl;
 
     public MonitorConfig() {
     }
@@ -194,7 +194,7 @@ public class MonitorConfig {
     public void setMqttBreakers(List<Breaker> _mqttBreakers) {
         mqttBreakers = _mqttBreakers;
     }
-
+  
     public boolean getInfluxDB2Enabled() {
         return influxDB2Enabled;
     }
@@ -233,5 +233,13 @@ public class MonitorConfig {
 
     public void setInfluxDB2Bucket(String _influxDB2Bucket) {
         influxDB2Bucket = _influxDB2Bucket;
+    }
+  
+    public String getLokiUrl() {
+        return NullUtils.isEmpty(lokiUrl) ? "http://127.0.0.1:3100" : lokiUrl;
+    }
+
+    public void setLokiUrl(String _lokiUrl) {
+        lokiUrl = _lokiUrl;
     }
 }
