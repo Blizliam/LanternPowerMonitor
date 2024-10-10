@@ -1,0 +1,10 @@
+version: "3.3"
+services:
+  lpm-service:
+    container_name: lpm-service
+    ports:
+      - 8080:8080
+    #volumes:
+      #- ./dir:/dir
+    image: lpm-service:latest
+
