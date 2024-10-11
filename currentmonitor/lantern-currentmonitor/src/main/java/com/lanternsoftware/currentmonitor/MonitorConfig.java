@@ -32,6 +32,8 @@ public class MonitorConfig {
     private String influxDB2Org;
     private String influxDB2Bucket;
     private String lokiUrl;
+    private String breakerConfigFile;
+    private boolean pushBreakerConfigToServer = false;
 
     public MonitorConfig() {
     }
@@ -241,5 +243,21 @@ public class MonitorConfig {
 
     public void setLokiUrl(String _lokiUrl) {
         lokiUrl = _lokiUrl;
+    }
+  
+    public String getBreakerConfigFile() {
+        return breakerConfigFile;
+    }
+
+    public void setBreakerConfigFile(String _breakerConfigFile) {
+        breakerConfigFile = _breakerConfigFile;
+    }
+  
+    public boolean getPushBreakerConfigToServer() {
+        return pushBreakerConfigToServer;
+    }
+
+    public void setPushBreakerConfigToServer(boolean _pushBreakerConfigToServer) {
+        pushBreakerConfigToServer = _pushBreakerConfigToServer;
     }
 }

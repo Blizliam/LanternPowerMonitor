@@ -1,6 +1,5 @@
 package com.lanternsoftware.currentmonitor;
 
-import com.google.gson.Gson;
 import com.lanternsoftware.currentmonitor.bluetooth.BleCharacteristicListener;
 import com.lanternsoftware.currentmonitor.led.LEDFlasher;
 import com.lanternsoftware.currentmonitor.util.NetworkMonitor;
@@ -61,6 +60,7 @@ public class MonitorApp {
 	private static MonitorConfig config;
 	private static BreakerConfig breakerConfig;
 	private static String host;
+	private static String breakerConfigFile;
 	private static HttpPool pool;
 	private static LEDFlasher flasher = null;
 	private static final AtomicBoolean running = new AtomicBoolean(true);
@@ -277,12 +277,13 @@ public class MonitorApp {
 	}
 
 	public static void main(String[] args) {
+		///*
 		try {
 			Runtime.getRuntime().exec(new String[]{"systemctl","restart","dbus"});
 			ConcurrencyUtils.sleep(500);
 		} catch (IOException _e) {
 			LOG.error("Exception occurred while trying to restart", _e);
-		}
+		} //*/
 
 		version = getVersionNumber();
 
@@ -296,7 +297,7 @@ public class MonitorApp {
 			LOG.info("Configuration loaded from: " + WORKING_DIR + "config.json");
 		}
 
-
+		///*
 		pool = HttpPool.builder().withValidateSSLCertificates(!config.isAcceptSelfSignedCertificates()).build();
 		if (NullUtils.isNotEmpty(config.getHost()))
 			host = NullUtils.terminateWith(config.getHost(), "/");
@@ -319,9 +320,26 @@ public class MonitorApp {
 		// Create MQTT object if configured
 		if (NullUtils.isNotEmpty(config.getMqttBrokerUrl()))
 			mqttPoster = new MqttPoster(config);
+ 		//*/
+		// If getBreakerConfigFile specified, use it
+		if (NullUtils.isNotEmpty(config.getBreakerConfigFile()))
+		{
+			breakerConfigFile = config.getBreakerConfigFile();
+			LOG.info("Breaker config file was specified. Loading config file instead of from server. Config file: " + breakerConfigFile);
+			BreakerConfig breakerConfigFromFile = DaoSerializer.parse(ResourceLoader.loadFileAsString(breakerConfigFile), BreakerConfig.class);
+			LOG.info("Config successfully parsed from file.");
 
-		// Attempts to load breaker config from remote server
-		if (NullUtils.isNotEmpty(host) && NullUtils.isNotEmpty(authCode)) {
+			if (config.getPushBreakerConfigToServer())
+			{
+				LOG.info("Pushing file loaded config to server. Setting this value to false.");
+
+				// NOT IMPLEMENTED YET
+
+				config.setPushBreakerConfigToServer(false);
+			}
+
+		} // Attempts to load breaker config from remote server
+		else if (NullUtils.isNotEmpty(host) && NullUtils.isNotEmpty(authCode)) {
 			int configAttempts = 0;
 			while (configAttempts < 5) {
 				HttpGet get = new HttpGet(host + "config");
