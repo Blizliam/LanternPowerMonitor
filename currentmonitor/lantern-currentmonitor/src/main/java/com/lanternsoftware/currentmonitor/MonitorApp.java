@@ -283,19 +283,31 @@ public class MonitorApp {
 		} catch (IOException _e) {
 			LOG.error("Exception occurred while trying to restart", _e);
 		}
+
 		version = getVersionNumber();
+
+		// Load config
 		config = DaoSerializer.parse(ResourceLoader.loadFileAsString(WORKING_DIR + "config.json"), MonitorConfig.class);
 		if (config == null) {
 			config = new MonitorConfig();
 			ResourceLoader.writeFile(WORKING_DIR + "config.json", DaoSerializer.toJson(config));
+			LOG.info("No configuration found. Created a new default one at: " + WORKING_DIR + "config.json");
+		} else {
+			LOG.info("Configuration loaded from: " + WORKING_DIR + "config.json");
 		}
-		LOG.info("Configuration loaded from: " + WORKING_DIR + "config.json");
+
+
 		pool = HttpPool.builder().withValidateSSLCertificates(!config.isAcceptSelfSignedCertificates()).build();
 		if (NullUtils.isNotEmpty(config.getHost()))
 			host = NullUtils.terminateWith(config.getHost(), "/");
+
+		// Prepare monitor object
 		monitor.setDebug(config.isDebug());
 		monitor.setPostSamples(config.isPostSamples());
+
 		LEDFlasher.setLEDOn(false);
+
+		// Authorize
 		if (NullUtils.isNotEmpty(config.getAuthCode()))
 			authCode = config.getAuthCode();
 		else if (NullUtils.isNotEmpty(host) && NullUtils.isNotEmpty(config.getUsername()) && NullUtils.isNotEmpty(config.getPassword())) {
@@ -303,8 +315,12 @@ public class MonitorApp {
 			HttpPool.addBasicAuthHeader(auth, config.getUsername(), config.getPassword());
 			authCode = DaoSerializer.getString(DaoSerializer.parse(pool.executeToString(auth)), "auth_code");
 		}
+
+		// Create MQTT object if configured
 		if (NullUtils.isNotEmpty(config.getMqttBrokerUrl()))
 			mqttPoster = new MqttPoster(config);
+
+		// Attempts to load breaker config from remote server
 		if (NullUtils.isNotEmpty(host) && NullUtils.isNotEmpty(authCode)) {
 			int configAttempts = 0;
 			while (configAttempts < 5) {
@@ -318,8 +334,12 @@ public class MonitorApp {
 				configAttempts++;
 			}
 		}
+
+		// Bluetooth setup
 		bluetoothConfig = new BluetoothConfig("Lantern Hub", bluetoothListener);
 		bluetoothConfig.start();
+
+		// Defaulting to MQTT mode only, couldn't get breaker config from remote server
 		if ((mqttPoster != null) && (breakerConfig == null)) {
 			LOG.info("Hub not configured by a Lantern Power Monitor server, defaulting to MQTT mode only");
 			BreakerHub hub = new BreakerHub();
@@ -340,6 +360,7 @@ public class MonitorApp {
 				breakerConfig.getBreakerGroups().add(g);
 			}
 		}
+
 		if (breakerConfig != null) {
 			LOG.info("Breaker Config loaded");
 			BreakerHub hub = breakerConfig.getHub(config.getHub());
