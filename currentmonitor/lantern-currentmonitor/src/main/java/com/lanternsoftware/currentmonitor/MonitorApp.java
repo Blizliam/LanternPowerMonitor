@@ -296,7 +296,6 @@ public class MonitorApp {
 			LOG.info("Configuration loaded from: " + WORKING_DIR + "config.json");
 		}
 
-
 		pool = HttpPool.builder().withValidateSSLCertificates(!config.isAcceptSelfSignedCertificates()).build();
 		if (NullUtils.isNotEmpty(config.getHost()))
 			host = NullUtils.terminateWith(config.getHost(), "/");
@@ -340,8 +339,8 @@ public class MonitorApp {
 		bluetoothConfig.start();
 
 		// Defaulting to MQTT mode only, couldn't get breaker config from remote server
-		if ((mqttPoster != null) && (breakerConfig == null)) {
-			LOG.info("Hub not configured by a Lantern Power Monitor server, defaulting to MQTT mode only");
+		if ((mqttPoster != null || config.getInfluxDB2Enabled()) && (breakerConfig == null)) {
+			LOG.info("Hub not configured by a Lantern Power Monitor server, defaulting to offline mode only. (MQTT or Influx)");
 			BreakerHub hub = new BreakerHub();
 			hub.setHub(config.getHub());
 			hub.setVoltageCalibrationFactor(config.getFinalVoltageCalibrationFactor());
